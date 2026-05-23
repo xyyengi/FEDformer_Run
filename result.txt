@@ -1,0 +1,6 @@
+wind_solar_load_168_FEDformer_random_modes64_custom_ftM_sl336_ll168_pl168_dm512_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_Custom_0  
+mse:71469656.0, mae:6288.376953125
+
+wind_solar_load_168_FEDformer_random_modes64_custom_ftM_sl336_ll168_pl168_dm512_nh8_el2_dl1_df2048_fc3_ebtimeF_dtTrue_Exp_Custom_0  
+mse:71469656.0, mae:6288.376953125
+

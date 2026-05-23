@@ -1,0 +1,14 @@
+absl-py
+einops
+h5py
+keopscore
+opt-einsum
+pandas
+git+https://github.com/fbcotter/pytorch_wavelets.git
+PyWavelets
+scikit-image
+scikit-learn
+scipy
+statsmodels
+sympy
+torch
