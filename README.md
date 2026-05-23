@@ -152,7 +152,7 @@ checkpoints/cpu_fedformer_168_smoke/checkpoint.pth
 - `d_layers=1`
 
 ```bash
-python run.py --is_training 1 --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 5 --early_stop_delta 0.00001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_fourier --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
 ```
 
 如果服务器报 `ModuleNotFoundError: No module named 'exp'`，先确认当前目录是项目根目录，并且 `exp/exp_main.py` 已经上传：
@@ -174,7 +174,7 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 Wavelets 版除了 `--version`、`task_id`、`des` 外，其他参数建议先与 Fourier 保持一致，方便公平对比。
 
 ```bash
-python run.py --is_training 1 --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 5 --early_stop_delta 0.00001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
 ```
 
 ### 参数放大是什么意思
@@ -186,8 +186,8 @@ python run.py --is_training 1 --task_id wind_solar_load_168_wavelets --model FED
 - `e_layers`：encoder 层数。越多模型更深，表达能力更强，也更慢、更容易过拟合。CPU smoke 用 `1`，正式建议 `2`。
 - `d_layers`：decoder 层数。当前保持 `1`，先不要同时加深 decoder，避免变量太多。
 - `--lradj type3`：固定学习率，不随 epoch 自动衰减。正式训练建议使用这个，避免 `type1` 每轮减半导致后期学习率过小。
-- `--early_stop_delta 0.00001`：验证集 loss 至少下降 `1e-5` 才算真正改善；否则累计 patience。这样可以避免极小浮动反复重置早停。
-- `--train_epochs 100 --patience 5`：最多跑 100 轮，但验证集连续 5 轮没有达到 `early_stop_delta` 要求的改善就停止。
+- `--early_stop_delta 0.000001`：验证集 loss 至少下降 `1e-6` 才算真正改善；否则累计 patience。这个比 `1e-5` 更温和，不容易太早停。
+- `--train_epochs 100 --patience 10`：最多跑 100 轮，但验证集连续 10 轮没有达到 `early_stop_delta` 要求的改善就停止。
 
 推荐服务器第一轮：
 
@@ -224,7 +224,13 @@ Wavelets 测试时把 `task_id / --version / --des` 换成训练 Wavelets 时的
 训练和测试的标准输出目录格式：
 
 ```text
-checkpoints/{setting}/checkpoint.pth
+results/{setting}/checkpoint.pth
+results/{setting}/config.json
+results/{setting}/train_log.json
+results/{setting}/losses.npy
+results/{setting}/metrics_test.json
+results/{setting}/figures/training_curves.pdf
+results/{setting}/figures/training_curves.png
 results/{setting}/metrics.npy
 results/{setting}/pred.npy
 results/{setting}/true.npy
@@ -267,11 +273,13 @@ actual = forecast + residual
 训练日志和报告会保存在：
 
 ```text
-experiments/{setting}_{timestamp}/config.json
-experiments/{setting}_{timestamp}/train_log.json
-experiments/{setting}_{timestamp}/metrics_test.json
-experiments/{setting}_{timestamp}/figures/training_curves.pdf
-experiments/{setting}_{timestamp}/summary.txt
+results/{setting}/config.json
+results/{setting}/train_log.json
+results/{setting}/losses.npy
+results/{setting}/metrics_test.json
+results/{setting}/figures/training_curves.pdf
+results/{setting}/figures/training_curves.png
+results/{setting}/summary.txt
 ```
 
 其中 `train_log.json` 记录每个 epoch 的 `train_loss`、`val_loss`、学习率和时间戳；训练过程中不会记录 per-epoch `test_loss`。

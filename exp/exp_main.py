@@ -112,7 +112,7 @@ class Exp_Main(Exp_Basic):
         return preds, trues, residual_actual_minus_forecast
 
     def export_split_predictions(self, setting, load=True):
-        folder_path = os.path.join('./results', setting)
+        folder_path = os.path.join(self.args.results_root, setting)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -212,9 +212,7 @@ class Exp_Main(Exp_Basic):
 
     def train(self, setting):
         # 初始化实验日志器（带时间戳）
-        from datetime import datetime
-        exp_name = f"{setting}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.logger = ExperimentLogger(base_dir='./experiments', exp_name=exp_name)
+        self.logger = ExperimentLogger(base_dir=self.args.results_root, exp_name=setting)
         self.logger.log_args(self.args)
         
         train_data, train_loader = self._get_data(flag='train')
@@ -330,11 +328,11 @@ class Exp_Main(Exp_Basic):
         test_data, test_loader = self._get_data(flag='test')
         if test:
             print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+            self.model.load_state_dict(torch.load(os.path.join(self.args.checkpoints, setting, 'checkpoint.pth')))
 
         preds = []
         trues = []
-        folder_path = './test_results/' + setting + '/'
+        folder_path = os.path.join(self.args.results_root, setting, 'test_visuals')
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
@@ -398,18 +396,17 @@ class Exp_Main(Exp_Basic):
         print('test shape after inverse:', preds.shape, trues.shape)
 
         # result save
-        folder_path = './results/' + setting + '/'
+        folder_path = os.path.join(self.args.results_root, setting)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 
         mae, mse, rmse, mape, mspe = metric(preds, trues)
         print('mse:{}, mae:{}'.format(mse, mae))
-        f = open("result.txt", 'a')
-        f.write(setting + "  \n")
-        f.write('mse:{}, mae:{}'.format(mse, mae))
-        f.write('\n')
-        f.write('\n')
-        f.close()
+        with open(os.path.join(folder_path, 'result.txt'), 'a') as f:
+            f.write(setting + "  \n")
+            f.write('mse:{}, mae:{}'.format(mse, mae))
+            f.write('\n')
+            f.write('\n')
 
         np.save(folder_path + 'metrics.npy', np.array([mae, mse, rmse, mape, mspe]))
         np.save(folder_path + 'pred.npy', preds)
@@ -478,7 +475,7 @@ class Exp_Main(Exp_Basic):
         preds = preds.reshape(-1, preds.shape[-2], preds.shape[-1])
 
         # result save
-        folder_path = './results/' + setting + '/'
+        folder_path = os.path.join(self.args.results_root, setting)
         if not os.path.exists(folder_path):
             os.makedirs(folder_path)
 

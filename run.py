@@ -7,6 +7,28 @@ import random
 import numpy as np
 
 
+def build_setting(args, iteration=0):
+    if args.run_name:
+        return args.run_name if args.itr == 1 else f"{args.run_name}_{iteration}"
+
+    parts = [
+        args.task_id,
+        args.version.lower(),
+        f"sl{args.seq_len}",
+        f"ll{args.label_len}",
+        f"pl{args.pred_len}",
+        f"dm{args.d_model}",
+        f"el{args.e_layers}",
+        f"dl{args.d_layers}",
+        f"bs{args.batch_size}",
+    ]
+    if args.des:
+        parts.append(args.des)
+    if args.itr > 1:
+        parts.append(str(iteration))
+    return "_".join(parts)
+
+
 def main():
     fix_seed = 2021
     random.seed(fix_seed)
@@ -44,7 +66,9 @@ def main():
                         help='freq for time features encoding, options:[s:secondly, t:minutely, h:hourly, d:daily, '
                              'b:business days, w:weekly, m:monthly], you can also use more detailed freq like 15min or 3h')
     parser.add_argument('--detail_freq', type=str, default='h', help='like freq, but use in predict')
-    parser.add_argument('--checkpoints', type=str, default='./checkpoints/', help='location of model checkpoints')
+    parser.add_argument('--results_root', type=str, default='./results/', help='root directory for all experiment outputs')
+    parser.add_argument('--checkpoints', type=str, default='./results/', help='root directory for model checkpoints')
+    parser.add_argument('--run_name', type=str, default=None, help='short experiment folder name under results_root')
 
     # forecasting task
     parser.add_argument('--seq_len', type=int, default=96, help='input sequence length')
@@ -112,27 +136,7 @@ def main():
 
     if args.is_training:
         for ii in range(args.itr):
-            # setting record of experiments
-            setting = '{}_{}_{}_modes{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
-                args.task_id,
-                args.model,
-                args.mode_select,
-                args.modes,
-                args.data,
-                args.features,
-                args.seq_len,
-                args.label_len,
-                args.pred_len,
-                args.d_model,
-                args.n_heads,
-                args.e_layers,
-                args.d_layers,
-                args.d_ff,
-                args.factor,
-                args.embed,
-                args.distil,
-                args.des,
-                ii)
+            setting = build_setting(args, ii)
 
             exp = Exp(args)  # set experiments
             print('>>>>>>>start training : {}>>>>>>>>>>>>>>>>>>>>>>>>>>'.format(setting))
@@ -152,26 +156,7 @@ def main():
             torch.cuda.empty_cache()
     else:
         ii = 0
-        setting = '{}_{}_{}_modes{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}_{}'.format(
-            args.task_id,
-            args.model,
-            args.mode_select,
-            args.modes,
-            args.data,
-            args.features,
-            args.seq_len,
-            args.label_len,
-            args.pred_len,
-            args.d_model,
-            args.n_heads,
-            args.e_layers,
-            args.d_layers,
-            args.d_ff,
-            args.factor,
-            args.embed,
-            args.distil,
-            args.des,
-            ii)
+        setting = build_setting(args, ii)
 
         exp = Exp(args)  # set experiments
         print('>>>>>>>testing : {}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'.format(setting))

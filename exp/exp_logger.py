@@ -63,6 +63,16 @@ class ExperimentLogger:
         log_path = os.path.join(self.exp_dir, 'train_log.json')
         with open(log_path, 'w') as f:
             json.dump(self.train_log, f, indent=2)
+        losses = np.array([
+            [
+                log['epoch'],
+                log['train_loss'],
+                log['val_loss'],
+                log['lr'] if log['lr'] is not None else np.nan,
+            ]
+            for log in self.train_log
+        ], dtype=float)
+        np.save(os.path.join(self.exp_dir, 'losses.npy'), losses)
     
     def log_metrics(self, metrics_dict, split='test'):
         """记录评估指标"""
@@ -229,7 +239,9 @@ class ExperimentLogger:
             axes[1].grid(True, alpha=0.3)
         
         plt.tight_layout()
-        plt.savefig(os.path.join(self.exp_dir, 'figures', 'training_curves.pdf'))
+        figure_base = os.path.join(self.exp_dir, 'figures', 'training_curves')
+        plt.savefig(figure_base + '.pdf')
+        plt.savefig(figure_base + '.png', dpi=160)
         plt.close()
         print(f"[Logger] 训练曲线已保存")
     
