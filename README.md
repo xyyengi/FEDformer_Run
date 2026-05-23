@@ -152,75 +152,29 @@ checkpoints/cpu_fedformer_168_smoke/checkpoint.pth
 - `d_layers=1`
 
 ```bash
-python run.py \
-  --is_training 1 \
-  --task_id wind_solar_load_168_fourier \
-  --model FEDformer \
-  --version Fourier \
-  --mode_select random \
-  --modes 128 \
-  --data custom \
-  --root_path ./ \
-  --data_path Wind_Solar_Load_Processed.csv \
-  --features M \
-  --seq_len 168 \
-  --label_len 168 \
-  --pred_len 168 \
-  --enc_in 11 \
-  --dec_in 11 \
-  --c_out 11 \
-  --d_model 128 \
-  --n_heads 8 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --d_ff 256 \
-  --factor 1 \
-  --embed timeF \
-  --des strict_168_fourier \
-  --freq h \
-  --train_epochs 30 \
-  --patience 5 \
-  --batch_size 32 \
-  --learning_rate 0.0001 \
-  --full_inference
+python run.py --is_training 1 --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 30 --patience 5 --batch_size 32 --learning_rate 0.0001 --full_inference
 ```
+
+如果服务器报 `ModuleNotFoundError: No module named 'exp'`，先确认当前目录是项目根目录，并且 `exp/exp_main.py` 已经上传：
+
+```bash
+pwd && ls -la exp exp/exp_main.py
+```
+
+如果文件存在但仍然无法导入，可以临时加上项目根目录到 `PYTHONPATH`：
+
+```bash
+export PYTHONPATH=$(pwd):$PYTHONPATH
+```
+
+然后再运行上面的单行训练命令。
 
 ### 可选对照训练：Wavelets
 
 Wavelets 版除了 `--version`、`task_id`、`des` 外，其他参数建议先与 Fourier 保持一致，方便公平对比。
 
 ```bash
-python run.py \
-  --is_training 1 \
-  --task_id wind_solar_load_168_wavelets \
-  --model FEDformer \
-  --version Wavelets \
-  --mode_select random \
-  --modes 128 \
-  --data custom \
-  --root_path ./ \
-  --data_path Wind_Solar_Load_Processed.csv \
-  --features M \
-  --seq_len 168 \
-  --label_len 168 \
-  --pred_len 168 \
-  --enc_in 11 \
-  --dec_in 11 \
-  --c_out 11 \
-  --d_model 128 \
-  --n_heads 8 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --d_ff 256 \
-  --factor 1 \
-  --embed timeF \
-  --des strict_168_wavelets \
-  --freq h \
-  --train_epochs 30 \
-  --patience 5 \
-  --batch_size 32 \
-  --learning_rate 0.0001 \
-  --full_inference
+python run.py --is_training 1 --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 30 --patience 5 --batch_size 32 --learning_rate 0.0001 --full_inference
 ```
 
 ### 参数放大是什么意思
@@ -247,32 +201,7 @@ Fourier + d_model=128 + d_ff=256 + modes=128 + e_layers=2 + batch_size=32 + full
 Fourier 示例：
 
 ```bash
-python run.py \
-  --is_training 0 \
-  --task_id wind_solar_load_168_fourier \
-  --model FEDformer \
-  --version Fourier \
-  --mode_select random \
-  --modes 128 \
-  --data custom \
-  --root_path ./ \
-  --data_path Wind_Solar_Load_Processed.csv \
-  --features M \
-  --seq_len 168 \
-  --label_len 168 \
-  --pred_len 168 \
-  --enc_in 11 \
-  --dec_in 11 \
-  --c_out 11 \
-  --d_model 128 \
-  --n_heads 8 \
-  --e_layers 2 \
-  --d_layers 1 \
-  --d_ff 256 \
-  --factor 1 \
-  --embed timeF \
-  --des strict_168_fourier \
-  --freq h
+python run.py --is_training 0 --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h
 ```
 
 Wavelets 测试时把 `task_id / --version / --des` 换成训练 Wavelets 时的值。
