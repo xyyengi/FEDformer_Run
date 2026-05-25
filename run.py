@@ -111,6 +111,15 @@ def main():
     parser.add_argument('--loss', type=str, default='mse', help='loss function')
     parser.add_argument('--lradj', type=str, default='type3',
                         help='learning rate schedule: type3 keeps a fixed learning rate')
+    parser.add_argument('--solar_idx', type=int, default=1, help='Solar feature index in model output')
+    parser.add_argument('--solar_clip_nonnegative', action='store_true', default=True,
+                        help='clip Solar predictions to be non-negative')
+    parser.add_argument('--solar_night_zero', action='store_true', default=True,
+                        help='force Solar predictions to zero for known night hours')
+    parser.add_argument('--solar_night_start', type=int, default=19,
+                        help='Europe/Berlin local hour from which Solar is forced to zero')
+    parser.add_argument('--solar_night_end', type=int, default=5,
+                        help='Europe/Berlin local hour through which Solar is forced to zero')
     parser.add_argument('--use_amp', action='store_true', help='use automatic mixed precision training', default=False)
 
     # GPU

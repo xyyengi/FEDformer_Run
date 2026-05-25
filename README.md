@@ -152,7 +152,7 @@ checkpoints/cpu_fedformer_168_smoke/checkpoint.pth
 - `d_layers=1`
 
 ```bash
-python run.py --is_training 1 --run_name fedformer168_fourier --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_fourier --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --solar_night_zero --solar_clip_nonnegative --full_inference
 ```
 
 如果服务器报 `ModuleNotFoundError: No module named 'exp'`，先确认当前目录是项目根目录，并且 `exp/exp_main.py` 已经上传：
@@ -174,7 +174,7 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 Wavelets 版除了 `--version`、`task_id`、`des` 外，其他参数建议先与 Fourier 保持一致，方便公平对比。
 
 ```bash
-python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --solar_night_zero --solar_clip_nonnegative --full_inference
 ```
 
 ### 参数放大是什么意思
@@ -188,6 +188,8 @@ python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_so
 - `--lradj type3`：固定学习率，不随 epoch 自动衰减。正式训练建议使用这个，避免 `type1` 每轮减半导致后期学习率过小。
 - `--early_stop_delta 0.000001`：验证集 loss 至少下降 `1e-6` 才算真正改善；否则累计 patience。这个比 `1e-5` 更温和，不容易太早停。
 - `--train_epochs 100 --patience 10`：最多跑 100 轮，但验证集连续 10 轮没有达到 `early_stop_delta` 要求的改善就停止。
+- `--solar_night_zero`：根据 `batch_y_mark` 中已知的 Europe/Berlin 本地小时，将夜间 Solar 预测强制为 0。默认夜间为 19:00 到次日 05:00，与 processed 数据清洗策略一致。
+- `--solar_clip_nonnegative`：将 Solar 预测裁剪为非负值，避免物理上不可能的负光伏输出。
 
 推荐服务器第一轮：
 

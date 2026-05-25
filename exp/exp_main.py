@@ -50,6 +50,36 @@ class Exp_Main(Exp_Basic):
         self.logger = None
         self.feature_names = ['Wind', 'Solar', 'Load']  # 默认特征名称
 
+    def _night_mask_from_mark(self, batch_y_mark):
+        mark_target = batch_y_mark[:, -self.args.pred_len:, :]
+        if mark_target.shape[-1] >= 8:
+            hour_sin = mark_target[:, :, 6]
+            hour_cos = mark_target[:, :, 7]
+            hour = torch.remainder(torch.round(torch.atan2(hour_sin, hour_cos) * 24.0 / (2.0 * np.pi)), 24)
+        elif mark_target.shape[-1] >= 4:
+            hour = mark_target[:, :, 3]
+        else:
+            return None
+        night_start = getattr(self.args, 'solar_night_start', 19)
+        night_end = getattr(self.args, 'solar_night_end', 5)
+        return (hour >= night_start) | (hour <= night_end)
+
+    def _apply_solar_constraints(self, outputs, batch_y_mark):
+        solar_idx = self.args.solar_idx if hasattr(self.args, 'solar_idx') else 1
+        if outputs.shape[-1] <= solar_idx:
+            return outputs
+
+        constrained = outputs.clone()
+        solar = constrained[:, :, solar_idx]
+        if getattr(self.args, 'solar_clip_nonnegative', True):
+            solar = torch.clamp(solar, min=0.0)
+        if getattr(self.args, 'solar_night_zero', True):
+            night_mask = self._night_mask_from_mark(batch_y_mark)
+            if night_mask is not None:
+                solar = torch.where(night_mask.to(solar.device), torch.zeros_like(solar), solar)
+        constrained[:, :, solar_idx] = solar
+        return constrained
+
     def _process_one_batch(self, batch_x, batch_y, batch_x_mark, batch_y_mark):
         dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
         dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
@@ -62,6 +92,8 @@ class Exp_Main(Exp_Basic):
 
         if self.args.output_attention:
             outputs = outputs[0]
+
+        outputs = self._apply_solar_constraints(outputs, batch_y_mark)
 
         f_dim = -1 if self.args.features == 'MS' else 0
         batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
@@ -197,6 +229,7 @@ class Exp_Main(Exp_Basic):
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                outputs = self._apply_solar_constraints(outputs, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
@@ -264,6 +297,7 @@ class Exp_Main(Exp_Basic):
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
+                        outputs = self._apply_solar_constraints(outputs, batch_y_mark)
                         f_dim = -1 if self.args.features == 'MS' else 0
                         batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
                         loss = criterion(outputs, batch_y)
@@ -274,6 +308,7 @@ class Exp_Main(Exp_Basic):
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
+                    outputs = self._apply_solar_constraints(outputs, batch_y_mark)
                     f_dim = -1 if self.args.features == 'MS' else 0
                     batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
@@ -362,6 +397,7 @@ class Exp_Main(Exp_Basic):
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
 
+                outputs = self._apply_solar_constraints(outputs, batch_y_mark)
                 f_dim = -1 if self.args.features == 'MS' else 0
 
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
@@ -468,6 +504,7 @@ class Exp_Main(Exp_Basic):
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
                     else:
                         outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
+                outputs = self._apply_solar_constraints(outputs, batch_y_mark)
                 pred = outputs.detach().cpu().numpy()  # .squeeze()
                 preds.append(pred)
 
