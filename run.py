@@ -77,9 +77,9 @@ def main():
     # parser.add_argument('--cross_activation', type=str, default='tanh'
 
     # model define
-    parser.add_argument('--enc_in', type=int, default=11, help='encoder input size (3 data features + 8 time features)')
-    parser.add_argument('--dec_in', type=int, default=11, help='decoder input size (3 data features + 8 time features)')
-    parser.add_argument('--c_out', type=int, default=11, help='output size (3 data features + 8 time features)')
+    parser.add_argument('--enc_in', type=int, default=3, help='encoder input size (Wind, Solar, Load)')
+    parser.add_argument('--dec_in', type=int, default=3, help='decoder input size (Wind, Solar, Load)')
+    parser.add_argument('--c_out', type=int, default=3, help='output size (Wind, Solar, Load)')
     parser.add_argument('--d_model', type=int, default=512, help='dimension of model')
     parser.add_argument('--n_heads', type=int, default=8, help='num of heads')
     parser.add_argument('--e_layers', type=int, default=2, help='num of encoder layers')

@@ -506,7 +506,7 @@ class Dataset_Custom(Dataset):
         # 将周期编码后的时间特征(8维)与数据特征(3维)拼接，得到11维
         # data_stamp 是经过 sin/cos 编码的 8 维时间特征（完整数据）
         # data 是 3 维数据特征 (Wind, Solar, Load)（完整数据）
-        combined_data = np.concatenate([data, data_stamp], axis=1)  # 拼接为 11 维
+        combined_data = data
         
         # 切片取对应的数据集部分
         self.data_x = combined_data[border1:border2]
@@ -606,8 +606,7 @@ class Dataset_Custom(Dataset):
         data_features_inv[:, solar_idx] = np.clip(data_features_inv[:, solar_idx], 0, None)
         
         # 重新拼接
-        result = np.concatenate([data_features_inv, time_features], axis=1)
-        return result.reshape(original_shape)
+        return data_features_inv.reshape(original_shape)
 
 
 class Dataset_Pred(Dataset):

@@ -85,17 +85,17 @@ torch 2.8.0+cpu
 --label_len 168
 --pred_len 168
 --features M
---enc_in 11
---dec_in 11
---c_out 11
+--enc_in 3
+--dec_in 3
+--c_out 3
 ```
 
 输入输出形状：
 
-- `batch_x` 形状为 `[batch, 168, 11]`。
-- `batch_y` 形状为 `[batch, 336, 11]`，其中最后 168 步是监督 target。
-- 前 3 个通道是 `Wind / Solar / Load`。
-- 后 8 个通道是周期时间特征。
+- `batch_x` 形状为 `[batch, 168, 3]`。
+- `batch_y` 形状为 `[batch, 336, 3]`，其中最后 168 步是监督 target。
+- `batch_x` / `batch_y` 只包含 `Wind / Solar / Load` 三个被预测变量。
+- `batch_x_mark` / `batch_y_mark` 单独保存 8 维周期时间特征，不参与 target loss。
 
 ## CPU 小规模验证
 
@@ -152,7 +152,7 @@ checkpoints/cpu_fedformer_168_smoke/checkpoint.pth
 - `d_layers=1`
 
 ```bash
-python run.py --is_training 1 --run_name fedformer168_fourier --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_fourier --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
 ```
 
 如果服务器报 `ModuleNotFoundError: No module named 'exp'`，先确认当前目录是项目根目录，并且 `exp/exp_main.py` 已经上传：
@@ -174,7 +174,7 @@ export PYTHONPATH=$(pwd):$PYTHONPATH
 Wavelets 版除了 `--version`、`task_id`、`des` 外，其他参数建议先与 Fourier 保持一致，方便公平对比。
 
 ```bash
-python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
+python run.py --is_training 1 --run_name fedformer168_wavelets --task_id wind_solar_load_168_wavelets --model FEDformer --version Wavelets --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_wavelets --freq h --train_epochs 100 --patience 10 --early_stop_delta 0.000001 --batch_size 64 --learning_rate 0.0001 --lradj type3 --full_inference
 ```
 
 ### 参数放大是什么意思
@@ -204,7 +204,7 @@ Fourier + d_model=128 + d_ff=256 + modes=128 + e_layers=2 + batch_size=64 + fixe
 Fourier 示例：
 
 ```bash
-python run.py --is_training 0 --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 11 --dec_in 11 --c_out 11 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h
+python run.py --is_training 0 --task_id wind_solar_load_168_fourier --model FEDformer --version Fourier --mode_select random --modes 128 --data custom --root_path ./ --data_path Wind_Solar_Load_Processed.csv --features M --seq_len 168 --label_len 168 --pred_len 168 --enc_in 3 --dec_in 3 --c_out 3 --d_model 128 --n_heads 8 --e_layers 2 --d_layers 1 --d_ff 256 --factor 1 --embed timeF --des strict_168_fourier --freq h
 ```
 
 Wavelets 测试时把 `task_id / --version / --des` 换成训练 Wavelets 时的值。
