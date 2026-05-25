@@ -69,16 +69,21 @@ class Exp_Main(Exp_Basic):
         if outputs.shape[-1] <= solar_idx:
             return outputs
 
-        constrained = outputs.clone()
-        solar = constrained[:, :, solar_idx]
+        solar = outputs[:, :, solar_idx]
         if getattr(self.args, 'solar_clip_nonnegative', True):
             solar = torch.clamp(solar, min=0.0)
         if getattr(self.args, 'solar_night_zero', True):
             night_mask = self._night_mask_from_mark(batch_y_mark)
             if night_mask is not None:
                 solar = torch.where(night_mask.to(solar.device), torch.zeros_like(solar), solar)
-        constrained[:, :, solar_idx] = solar
-        return constrained
+
+        parts = []
+        if solar_idx > 0:
+            parts.append(outputs[:, :, :solar_idx])
+        parts.append(solar.unsqueeze(-1))
+        if solar_idx + 1 < outputs.shape[-1]:
+            parts.append(outputs[:, :, solar_idx + 1:])
+        return torch.cat(parts, dim=-1)
 
     def _process_one_batch(self, batch_x, batch_y, batch_x_mark, batch_y_mark):
         dec_inp = torch.zeros_like(batch_y[:, -self.args.pred_len:, :]).float()
